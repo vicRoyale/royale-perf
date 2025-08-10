@@ -1,0 +1,12 @@
+# Base
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=changeme-super-secret
+DATABASE_URL=postgresql://postgres:postgres@db:5432/royale?schema=public
+
+# Auth (Credentials)
+PASSWORD_SALT_ROUNDS=12
+
+# App
+APP_BRAND_NAME=Royale Transactions
+APP_BRAND_PRIMARY=#0C1E5B
+APP_BRAND_SECONDARY=#C8A968
