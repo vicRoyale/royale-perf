@@ -1,0 +1,21 @@
+erDiagram
+  User ||--o{ Activity : has
+  User ||--o{ Lead : has
+  User ||--o{ Mandate : has
+  User ||--o{ Visit : has
+  User ||--o{ Offer : has
+  User ||--o{ Deal : has
+  User ||--o{ Property : has
+  User ||--o{ AuditLog : writes
+  Team ||--o{ User : members
+  Team ||--o{ Goal : goals
+  Goal }o--|| User : forUser
+  Goal }o--|| Team : forTeam
+  Lead ||--o{ Activity : related
+  Lead ||--o{ Visit : related
+  Lead ||--o{ Offer : related
+  Lead ||--o{ Deal : related
+  Property ||--o{ Mandate : has
+  Property ||--o{ Visit : has
+  Property ||--o{ Offer : has
+  Property ||--o{ Deal : has
