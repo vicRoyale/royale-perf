@@ -1,0 +1,9 @@
+# Royale Transactions – Suivi de performance
+
+## Lancer en 2 minutes
+
+```bash
+pnpm i
+pnpm prisma:migrate
+pnpm db:seed
+pnpm dev
