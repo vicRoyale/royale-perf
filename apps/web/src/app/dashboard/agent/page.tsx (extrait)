@@ -1,0 +1,32 @@
+import { prisma } from '@/src/lib/prisma'
+import DashboardKpis from '@/src/components/DashboardKpis'
+import Charts from '@/src/components/Charts'
+import Funnel from '@/src/components/Funnel'
+import QuickActions from '@/src/components/QuickActions'
+import { subscribeKpis } from '@/src/lib/sse'
+
+export default async function AgentDashboard(){
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), 1)
+  const end = new Date(now.getFullYear(), now.getMonth()+1, 0)
+
+  // Pré-chargement serveur (RSC)
+  const [calls, estimates, mandates, offers, compromis, actes, revenue] = await Promise.all([
+    prisma.activity.count({ where: { type:'CALL', date: { gte: start, lte: end } } }),
+    prisma.activity.count({ where: { type:'ESTIMATION', date: { gte: start, lte: end } } }),
+    prisma.mandate.count({ where: { dateStart: { gte: start, lte: end } } }),
+    prisma.offer.count({ where: { date: { gte: start, lte: end } } }),
+    prisma.deal.count({ where: { type:'COMPROMIS', date: { gte: start, lte: end } } }),
+    prisma.deal.count({ where: { type:'ACTE', date: { gte: start, lte: end } } }),
+    prisma.deal.aggregate({ _sum: { commission: true }, where: { type:'ACTE', date: { gte: start, lte: end } } })
+  ])
+
+  return (
+    <div className="p-6 space-y-6">
+      <DashboardKpis initial={{ calls, estimates, mandates, offers, compromis, actes, revenue: revenue._sum.commission ?? 0 }} />
+      <QuickActions />
+      <Charts />
+      <Funnel />
+    </div>
+  )
+}
