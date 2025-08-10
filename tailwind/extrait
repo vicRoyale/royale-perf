@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+
+/* Focus visible */
+*:focus-visible { outline: 2px solid #C8A968; outline-offset: 2px; }
