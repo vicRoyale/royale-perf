@@ -53,10 +53,20 @@ model User {
   lastName   String
   role       Role
   active     Boolean  @default(true)
+
+  // Membre d'une équipe (relation 1-n Team -> Users)
   team       Team?    @relation(fields: [teamId], references: [id])
   teamId     String?
+
+  // Manager d'équipes (relation séparée nommée)
+  managedTeams Team[] @relation("TeamManager")
+
+  // Objectifs personnels (opposé de Goal.user)
+  goals      Goal[]
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
   activities Activity[]
   leads      Lead[]
   mandates   Mandate[]
@@ -70,9 +80,14 @@ model User {
 model Team {
   id        String  @id @default(cuid())
   name      String
+
+  // Manager (relation nommée pour éviter le conflit avec members)
   manager   User?   @relation("TeamManager", fields: [managerId], references: [id])
   managerId String?
+
+  // Membres de l'équipe
   members   User[]
+
   goals     Goal[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -82,10 +97,14 @@ model Goal {
   id        String    @id @default(cuid())
   scope     GoalScope
   period    DateTime  // premier jour du mois
+
   team      Team?     @relation(fields: [teamId], references: [id])
   teamId    String?
+
+  // Objectif assigné à un user (opposé: User.goals)
   user      User?     @relation(fields: [userId], references: [id])
   userId    String?
+
   targetMandates        Int      @default(0)
   targetExclusive       Int      @default(0)
   targetRevenue         Float    @default(0)
@@ -94,8 +113,10 @@ model Goal {
   targetVisits          Int      @default(0)
   targetDealsCompromis  Int      @default(0)
   targetDealsActes      Int      @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@index([scope, period])
 }
 
@@ -104,12 +125,16 @@ model Lead {
   source     String
   contact    String
   status     String
+
   agent      User     @relation(fields: [agentId], references: [id])
   agentId    String
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
   slaHours   Int      @default(0) // temps de réponse
   firstReply DateTime?
+
   activities Activity[]
   offers     Offer[]
   deals      Deal[]
@@ -122,11 +147,15 @@ model Activity {
   date      DateTime
   duration  Int?         // minutes
   notes     String?
+
   agent     User         @relation(fields: [agentId], references: [id])
   agentId   String
+
   lead      Lead?        @relation(fields: [leadId], references: [id])
   leadId    String?
+
   createdAt DateTime     @default(now())
+
   @@index([agentId, date])
 }
 
@@ -138,34 +167,51 @@ model Property {
   postalCode  String
   surface     Float
   priceTarget Float
+
   agent       User     @relation(fields: [agentId], references: [id])
   agentId     String
+
   createdAt   DateTime @default(now())
+
+  // Opposés nécessaires
+  mandates    Mandate[]
+  visits      Visit[]
+  offers      Offer[]
+  deals       Deal[]
 }
 
 model Mandate {
   id         String      @id @default(cuid())
   type       MandateType
+
   property   Property?   @relation(fields: [propertyId], references: [id])
   propertyId String?
+
   dateStart  DateTime
   dateEnd    DateTime?
   priceAsk   Float
+
   agent      User        @relation(fields: [agentId], references: [id])
   agentId    String
+
   createdAt  DateTime    @default(now())
 }
 
 model Visit {
   id         String    @id @default(cuid())
+
   property   Property? @relation(fields: [propertyId], references: [id])
   propertyId String?
+
   lead       Lead?     @relation(fields: [leadId], references: [id])
   leadId     String?
+
   date       DateTime
   result     String?
+
   agent      User      @relation(fields: [agentId], references: [id])
   agentId    String
+
   createdAt  DateTime  @default(now())
 }
 
@@ -174,13 +220,18 @@ model Offer {
   amount     Float
   status     OfferStatus
   date       DateTime
+
   agent      User        @relation(fields: [agentId], references: [id])
   agentId    String
+
   property   Property?   @relation(fields: [propertyId], references: [id])
   propertyId String?
+
   lead       Lead?       @relation(fields: [leadId], references: [id])
   leadId     String?
+
   createdAt  DateTime    @default(now())
+
   @@index([status, date])
 }
 
@@ -190,13 +241,18 @@ model Deal {
   amount     Float
   commission Float
   date       DateTime
+
   agent      User     @relation(fields: [agentId], references: [id])
   agentId    String
+
   lead       Lead?    @relation(fields: [leadId], references: [id])
   leadId     String?
+
   property   Property? @relation(fields: [propertyId], references: [id])
   propertyId String?
+
   createdAt  DateTime  @default(now())
+
   @@index([type, date])
 }
 
@@ -204,18 +260,19 @@ model KpiSnapshot {
   id       String   @id @default(cuid())
   period   DateTime // mois
   // Agrégats dénormalisés pour historisation
-  calls    Int      @default(0)
-  emails   Int      @default(0)
-  sms      Int      @default(0)
+  calls     Int     @default(0)
+  emails    Int     @default(0)
+  sms       Int     @default(0)
   estimates Int     @default(0)
-  visits   Int      @default(0)
-  mandates Int      @default(0)
+  visits    Int     @default(0)
+  mandates  Int     @default(0)
   exclusive Int     @default(0)
-  offers   Int      @default(0)
+  offers    Int     @default(0)
   compromis Int     @default(0)
-  actes    Int      @default(0)
-  revenue  Float    @default(0)
+  actes     Int     @default(0)
+  revenue   Float   @default(0)
   createdAt DateTime @default(now())
+
   @@unique([period])
 }
 
@@ -228,5 +285,6 @@ model AuditLog {
   before    Json?
   after     Json?
   createdAt DateTime @default(now())
+
   @@index([entity, createdAt])
 }
