@@ -1,0 +1,19 @@
+import { prisma } from '@/src/lib/prisma'
+import { z } from 'zod'
+import { broadcastKpiUpdate } from '../sse/stream/route'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/src/lib/auth'
+
+const schema = z.object({ type: z.string(), date: z.string(), duration: z.number().optional(), leadId: z.string().optional() })
+
+export async function POST(req: Request){
+  const session = await getServerSession(authOptions)
+  if (!session) return new Response('Unauthorized', { status: 401 })
+  const userId = (session as any).user.id
+  const body = await req.json()
+  const data = schema.parse(body)
+  const activity = await prisma.activity.create({ data: { type: data.type as any, date: new Date(data.date), duration: data.duration ?? null, agentId: userId, leadId: data.leadId } })
+  await prisma.auditLog.create({ data: { userId, action:'CREATE', entity:'Activity', after: activity as any } })
+  broadcastKpiUpdate({ scope:'USER', userId, at: Date.now(), entity:'Activity' })
+  return Response.json(activity)
+}
