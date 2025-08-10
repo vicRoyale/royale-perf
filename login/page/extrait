@@ -1,0 +1,31 @@
+'use client'
+import { z } from 'zod'
+import { useState } from 'react'
+import { signIn } from 'next-auth/react'
+
+const schema = z.object({ email: z.string().email('Email invalide'), password: z.string().min(6,'6 caractères minimum') })
+
+export default function LoginPage(){
+  const [error, setError] = useState<string|undefined>()
+  async function onSubmit(formData: FormData){
+    try {
+      const data = Object.fromEntries(formData.entries())
+      const parsed = schema.parse({ email: data.email, password: data.password })
+      const res = await signIn('credentials', { ...parsed, redirect: true, callbackUrl: '/redirect' })
+      if ((res as any)?.error) setError('Identifiants invalides')
+    } catch(e:any){ setError(e?.errors?.[0]?.message || 'Erreur') }
+  }
+  return (
+    <div className="min-h-screen grid place-items-center bg-royale.light">
+      <form action={onSubmit} className="w-full max-w-sm bg-white p-6 rounded-2xl shadow">
+        <h1 className="text-2xl font-semibold text-royale.primary mb-4">Connexion</h1>
+        <label className="block text-sm mb-1">Email</label>
+        <input name="email" type="email" className="w-full border p-2 rounded mb-3" required aria-label="Email"/>
+        <label className="block text-sm mb-1">Mot de passe</label>
+        <input name="password" type="password" className="w-full border p-2 rounded mb-3" required aria-label="Mot de passe"/>
+        {error && <p className="text-red-600 text-sm mb-2" role="alert">{error}</p>}
+        <button className="w-full bg-royale.primary text-white py-2 rounded-xl">Se connecter</button>
+      </form>
+    </div>
+  )
+}
